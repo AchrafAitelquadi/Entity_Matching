@@ -1,7 +1,10 @@
 # Ditto Pipeline
 
-This project implements a pipeline for entity matching using [Ditto](https://github.com/amazon-science/ditto), a transformer-based deep learning model.
+This project implements a pipeline for entity matching using [Ditto](https://arxiv.org/pdf/2004.00584), a transformer-based deep learning model.
 
+---
+
+![Ditto Architecture](images/ditto.jpg)
 ---
 
 ## 🛠️ Setup and Usage Guide
