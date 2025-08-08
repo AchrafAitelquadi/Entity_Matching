@@ -1,0 +1,310 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: blocked-inference-pipeline-
+  annotations: {pipelines.kubeflow.org/kfp_sdk_version: 1.8.0, pipelines.kubeflow.org/pipeline_compilation_time: '2025-08-07T22:10:02.178841',
+    pipelines.kubeflow.org/pipeline_spec: '{"description": "Pipeline to run blocking
+      then inference on candidate pairs", "inputs": [{"name": "model_path"}, {"name":
+      "reference_table_csv"}, {"name": "source_table_csv"}, {"name": "lm"}, {"name":
+      "max_len"}, {"name": "model_name_blocking"}, {"name": "threshold_blocking"},
+      {"name": "top_k_blocking"}, {"name": "batch_size_blocking"}], "name": "Blocked
+      Inference Pipeline"}'}
+  labels: {pipelines.kubeflow.org/kfp_sdk_version: 1.8.0}
+spec:
+  entrypoint: blocked-inference-pipeline
+  templates:
+  - name: blocked-inference-pipeline
+    inputs:
+      parameters:
+      - {name: batch_size_blocking}
+      - {name: lm}
+      - {name: max_len}
+      - {name: model_name_blocking}
+      - {name: model_path}
+      - {name: threshold_blocking}
+      - {name: top_k_blocking}
+      artifacts:
+      - {name: reference_table_csv}
+      - {name: source_table_csv}
+    dag:
+      tasks:
+      - name: run-blocked-inference-component
+        template: run-blocked-inference-component
+        dependencies: [run-blocking-component]
+        arguments:
+          parameters:
+          - {name: lm, value: '{{inputs.parameters.lm}}'}
+          - {name: max_len, value: '{{inputs.parameters.max_len}}'}
+          - {name: model_path, value: '{{inputs.parameters.model_path}}'}
+          artifacts:
+          - {name: reference_table_csv, from: '{{inputs.artifacts.reference_table_csv}}'}
+          - {name: run-blocking-component-output_pairs_csv, from: '{{tasks.run-blocking-component.outputs.artifacts.run-blocking-component-output_pairs_csv}}'}
+          - {name: source_table_csv, from: '{{inputs.artifacts.source_table_csv}}'}
+      - name: run-blocking-component
+        template: run-blocking-component
+        arguments:
+          parameters:
+          - {name: batch_size_blocking, value: '{{inputs.parameters.batch_size_blocking}}'}
+          - {name: model_name_blocking, value: '{{inputs.parameters.model_name_blocking}}'}
+          - {name: threshold_blocking, value: '{{inputs.parameters.threshold_blocking}}'}
+          - {name: top_k_blocking, value: '{{inputs.parameters.top_k_blocking}}'}
+          artifacts:
+          - {name: reference_table_csv, from: '{{inputs.artifacts.reference_table_csv}}'}
+          - {name: source_table_csv, from: '{{inputs.artifacts.source_table_csv}}'}
+  - name: run-blocked-inference-component
+    container:
+      args: [--model-path, '{{inputs.parameters.model_path}}', --blocked-pairs-csv,
+        /tmp/inputs/blocked_pairs_csv/data, --reference-table-csv, /tmp/inputs/reference_table_csv/data,
+        --source-table-csv, /tmp/inputs/source_table_csv/data, --lm, '{{inputs.parameters.lm}}',
+        --max-len, '{{inputs.parameters.max_len}}', --output-csv, /tmp/outputs/output_csv/data]
+      command:
+      - sh
+      - -ec
+      - |
+        program_path=$(mktemp)
+        printf "%s" "$0" > "$program_path"
+        python3 -u "$program_path" "$@"
+      - |
+        def _make_parent_dirs_and_return_path(file_path: str):
+            import os
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+            return file_path
+
+        def run_blocked_inference_component(
+            model_path,
+            blocked_pairs_csv,
+            reference_table_csv,
+            source_table_csv,
+            output_csv,
+            lm,
+            max_len
+        ):
+            run_blocked_inference(
+                model_path=model_path,
+                blocked_pairs_csv=blocked_pairs_csv,
+                reference_table_csv=reference_table_csv,
+                source_table_csv=source_table_csv,
+                output_csv=output_csv,
+                lm=lm,
+                max_len=max_len
+            )
+
+        import argparse
+        _parser = argparse.ArgumentParser(prog='Run blocked inference component', description='')
+        _parser.add_argument("--model-path", dest="model_path", type=str, required=True, default=argparse.SUPPRESS)
+        _parser.add_argument("--blocked-pairs-csv", dest="blocked_pairs_csv", type=str, required=True, default=argparse.SUPPRESS)
+        _parser.add_argument("--reference-table-csv", dest="reference_table_csv", type=str, required=True, default=argparse.SUPPRESS)
+        _parser.add_argument("--source-table-csv", dest="source_table_csv", type=str, required=True, default=argparse.SUPPRESS)
+        _parser.add_argument("--lm", dest="lm", type=str, required=True, default=argparse.SUPPRESS)
+        _parser.add_argument("--max-len", dest="max_len", type=int, required=True, default=argparse.SUPPRESS)
+        _parser.add_argument("--output-csv", dest="output_csv", type=_make_parent_dirs_and_return_path, required=True, default=argparse.SUPPRESS)
+        _parsed_args = vars(_parser.parse_args())
+
+        _outputs = run_blocked_inference_component(**_parsed_args)
+      image: 172.17.232.16:9001/ditto:latest
+      resources:
+        limits: {nvidia.com/gpu: 1, cpu: '4', memory: 16Gi}
+    inputs:
+      parameters:
+      - {name: lm}
+      - {name: max_len}
+      - {name: model_path}
+      artifacts:
+      - {name: run-blocking-component-output_pairs_csv, path: /tmp/inputs/blocked_pairs_csv/data}
+      - {name: reference_table_csv, path: /tmp/inputs/reference_table_csv/data}
+      - {name: source_table_csv, path: /tmp/inputs/source_table_csv/data}
+    outputs:
+      artifacts:
+      - {name: run-blocked-inference-component-output_csv, path: /tmp/outputs/output_csv/data}
+    metadata:
+      annotations: {pipelines.kubeflow.org/task_display_name: Inference Step, pipelines.kubeflow.org/component_spec: '{"implementation":
+          {"container": {"args": ["--model-path", {"inputValue": "model_path"}, "--blocked-pairs-csv",
+          {"inputPath": "blocked_pairs_csv"}, "--reference-table-csv", {"inputPath":
+          "reference_table_csv"}, "--source-table-csv", {"inputPath": "source_table_csv"},
+          "--lm", {"inputValue": "lm"}, "--max-len", {"inputValue": "max_len"}, "--output-csv",
+          {"outputPath": "output_csv"}], "command": ["sh", "-ec", "program_path=$(mktemp)\nprintf
+          \"%s\" \"$0\" > \"$program_path\"\npython3 -u \"$program_path\" \"$@\"\n",
+          "def _make_parent_dirs_and_return_path(file_path: str):\n    import os\n    os.makedirs(os.path.dirname(file_path),
+          exist_ok=True)\n    return file_path\n\ndef run_blocked_inference_component(\n    model_path,\n    blocked_pairs_csv,\n    reference_table_csv,\n    source_table_csv,\n    output_csv,\n    lm,\n    max_len\n):\n    run_blocked_inference(\n        model_path=model_path,\n        blocked_pairs_csv=blocked_pairs_csv,\n        reference_table_csv=reference_table_csv,\n        source_table_csv=source_table_csv,\n        output_csv=output_csv,\n        lm=lm,\n        max_len=max_len\n    )\n\nimport
+          argparse\n_parser = argparse.ArgumentParser(prog=''Run blocked inference
+          component'', description='''')\n_parser.add_argument(\"--model-path\", dest=\"model_path\",
+          type=str, required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--blocked-pairs-csv\",
+          dest=\"blocked_pairs_csv\", type=str, required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--reference-table-csv\",
+          dest=\"reference_table_csv\", type=str, required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--source-table-csv\",
+          dest=\"source_table_csv\", type=str, required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--lm\",
+          dest=\"lm\", type=str, required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--max-len\",
+          dest=\"max_len\", type=int, required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--output-csv\",
+          dest=\"output_csv\", type=_make_parent_dirs_and_return_path, required=True,
+          default=argparse.SUPPRESS)\n_parsed_args = vars(_parser.parse_args())\n\n_outputs
+          = run_blocked_inference_component(**_parsed_args)\n"], "image": "172.17.232.16:9001/ditto:latest"}},
+          "inputs": [{"name": "model_path", "type": "String"}, {"name": "blocked_pairs_csv",
+          "type": "CSV"}, {"name": "reference_table_csv", "type": "CSV"}, {"name":
+          "source_table_csv", "type": "CSV"}, {"name": "lm", "type": "String"}, {"name":
+          "max_len", "type": "Integer"}], "name": "Run blocked inference component",
+          "outputs": [{"name": "output_csv", "type": "CSV"}]}', pipelines.kubeflow.org/component_ref: '{}',
+        pipelines.kubeflow.org/arguments.parameters: '{"lm": "{{inputs.parameters.lm}}",
+          "max_len": "{{inputs.parameters.max_len}}", "model_path": "{{inputs.parameters.model_path}}"}'}
+      labels:
+        pipelines.kubeflow.org/kfp_sdk_version: 1.8.0
+        pipelines.kubeflow.org/pipeline-sdk-type: kfp
+        pipelines.kubeflow.org/enable_caching: "true"
+  - name: run-blocking-component
+    container:
+      args: [--table-reference-csv, /tmp/inputs/table_reference_csv/data, --table-source-csv,
+        /tmp/inputs/table_source_csv/data, --model-name-blocking, '{{inputs.parameters.model_name_blocking}}',
+        --threshold-blocking, '{{inputs.parameters.threshold_blocking}}', --top-k-blocking,
+        '{{inputs.parameters.top_k_blocking}}', --batch-size-blocking, '{{inputs.parameters.batch_size_blocking}}',
+        --output-pairs-csv, /tmp/outputs/output_pairs_csv/data, --output-ditto-txt,
+        /tmp/outputs/output_ditto_txt/data, --table-reference-txt, /tmp/outputs/table_reference_txt/data,
+        --table-source-txt, /tmp/outputs/table_source_txt/data, --table-reference-vec,
+        /tmp/outputs/table_reference_vec/data, --table-source-vec, /tmp/outputs/table_source_vec/data]
+      command:
+      - sh
+      - -ec
+      - |
+        program_path=$(mktemp)
+        printf "%s" "$0" > "$program_path"
+        python3 -u "$program_path" "$@"
+      - |
+        def _make_parent_dirs_and_return_path(file_path: str):
+            import os
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+            return file_path
+
+        def run_blocking_component(
+            table_reference_csv,
+            table_source_csv,
+            output_pairs_csv,
+            output_ditto_txt,
+            table_reference_txt,
+            table_source_txt,
+            table_reference_vec,
+            table_source_vec,
+            model_name_blocking,
+            threshold_blocking,
+            top_k_blocking,
+            batch_size_blocking
+        ):
+            hp = SimpleNamespace(
+                table_reference_csv=table_reference_csv,
+                table_source_csv=table_source_csv,
+                output_pairs_csv=output_pairs_csv,
+                output_ditto_txt=output_ditto_txt,
+                table_reference_txt=table_reference_txt,
+                table_source_txt=table_source_txt,
+                table_reference_vec=table_reference_vec,
+                table_source_vec=table_source_vec,
+                model_name_blocking=model_name_blocking,
+                threshold_blocking=threshold_blocking,
+                top_k_blocking=top_k_blocking,
+                batch_size_blocking=batch_size_blocking
+            )
+            blocking_func(hp)
+
+        import argparse
+        _parser = argparse.ArgumentParser(prog='Run blocking component', description='')
+        _parser.add_argument("--table-reference-csv", dest="table_reference_csv", type=str, required=True, default=argparse.SUPPRESS)
+        _parser.add_argument("--table-source-csv", dest="table_source_csv", type=str, required=True, default=argparse.SUPPRESS)
+        _parser.add_argument("--model-name-blocking", dest="model_name_blocking", type=str, required=True, default=argparse.SUPPRESS)
+        _parser.add_argument("--threshold-blocking", dest="threshold_blocking", type=float, required=True, default=argparse.SUPPRESS)
+        _parser.add_argument("--top-k-blocking", dest="top_k_blocking", type=int, required=True, default=argparse.SUPPRESS)
+        _parser.add_argument("--batch-size-blocking", dest="batch_size_blocking", type=int, required=True, default=argparse.SUPPRESS)
+        _parser.add_argument("--output-pairs-csv", dest="output_pairs_csv", type=_make_parent_dirs_and_return_path, required=True, default=argparse.SUPPRESS)
+        _parser.add_argument("--output-ditto-txt", dest="output_ditto_txt", type=_make_parent_dirs_and_return_path, required=True, default=argparse.SUPPRESS)
+        _parser.add_argument("--table-reference-txt", dest="table_reference_txt", type=_make_parent_dirs_and_return_path, required=True, default=argparse.SUPPRESS)
+        _parser.add_argument("--table-source-txt", dest="table_source_txt", type=_make_parent_dirs_and_return_path, required=True, default=argparse.SUPPRESS)
+        _parser.add_argument("--table-reference-vec", dest="table_reference_vec", type=_make_parent_dirs_and_return_path, required=True, default=argparse.SUPPRESS)
+        _parser.add_argument("--table-source-vec", dest="table_source_vec", type=_make_parent_dirs_and_return_path, required=True, default=argparse.SUPPRESS)
+        _parsed_args = vars(_parser.parse_args())
+
+        _outputs = run_blocking_component(**_parsed_args)
+      image: 172.17.232.16:9001/ditto:latest
+      resources:
+        limits: {nvidia.com/gpu: 1, cpu: '2', memory: 8Gi}
+    inputs:
+      parameters:
+      - {name: batch_size_blocking}
+      - {name: model_name_blocking}
+      - {name: threshold_blocking}
+      - {name: top_k_blocking}
+      artifacts:
+      - {name: reference_table_csv, path: /tmp/inputs/table_reference_csv/data}
+      - {name: source_table_csv, path: /tmp/inputs/table_source_csv/data}
+    outputs:
+      artifacts:
+      - {name: run-blocking-component-output_ditto_txt, path: /tmp/outputs/output_ditto_txt/data}
+      - {name: run-blocking-component-output_pairs_csv, path: /tmp/outputs/output_pairs_csv/data}
+      - {name: run-blocking-component-table_reference_txt, path: /tmp/outputs/table_reference_txt/data}
+      - {name: run-blocking-component-table_reference_vec, path: /tmp/outputs/table_reference_vec/data}
+      - {name: run-blocking-component-table_source_txt, path: /tmp/outputs/table_source_txt/data}
+      - {name: run-blocking-component-table_source_vec, path: /tmp/outputs/table_source_vec/data}
+    metadata:
+      annotations: {pipelines.kubeflow.org/task_display_name: Blocking Step, pipelines.kubeflow.org/component_spec: '{"implementation":
+          {"container": {"args": ["--table-reference-csv", {"inputPath": "table_reference_csv"},
+          "--table-source-csv", {"inputPath": "table_source_csv"}, "--model-name-blocking",
+          {"inputValue": "model_name_blocking"}, "--threshold-blocking", {"inputValue":
+          "threshold_blocking"}, "--top-k-blocking", {"inputValue": "top_k_blocking"},
+          "--batch-size-blocking", {"inputValue": "batch_size_blocking"}, "--output-pairs-csv",
+          {"outputPath": "output_pairs_csv"}, "--output-ditto-txt", {"outputPath":
+          "output_ditto_txt"}, "--table-reference-txt", {"outputPath": "table_reference_txt"},
+          "--table-source-txt", {"outputPath": "table_source_txt"}, "--table-reference-vec",
+          {"outputPath": "table_reference_vec"}, "--table-source-vec", {"outputPath":
+          "table_source_vec"}], "command": ["sh", "-ec", "program_path=$(mktemp)\nprintf
+          \"%s\" \"$0\" > \"$program_path\"\npython3 -u \"$program_path\" \"$@\"\n",
+          "def _make_parent_dirs_and_return_path(file_path: str):\n    import os\n    os.makedirs(os.path.dirname(file_path),
+          exist_ok=True)\n    return file_path\n\ndef run_blocking_component(\n    table_reference_csv,\n    table_source_csv,\n    output_pairs_csv,\n    output_ditto_txt,\n    table_reference_txt,\n    table_source_txt,\n    table_reference_vec,\n    table_source_vec,\n    model_name_blocking,\n    threshold_blocking,\n    top_k_blocking,\n    batch_size_blocking\n):\n    hp
+          = SimpleNamespace(\n        table_reference_csv=table_reference_csv,\n        table_source_csv=table_source_csv,\n        output_pairs_csv=output_pairs_csv,\n        output_ditto_txt=output_ditto_txt,\n        table_reference_txt=table_reference_txt,\n        table_source_txt=table_source_txt,\n        table_reference_vec=table_reference_vec,\n        table_source_vec=table_source_vec,\n        model_name_blocking=model_name_blocking,\n        threshold_blocking=threshold_blocking,\n        top_k_blocking=top_k_blocking,\n        batch_size_blocking=batch_size_blocking\n    )\n    blocking_func(hp)\n\nimport
+          argparse\n_parser = argparse.ArgumentParser(prog=''Run blocking component'',
+          description='''')\n_parser.add_argument(\"--table-reference-csv\", dest=\"table_reference_csv\",
+          type=str, required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--table-source-csv\",
+          dest=\"table_source_csv\", type=str, required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--model-name-blocking\",
+          dest=\"model_name_blocking\", type=str, required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--threshold-blocking\",
+          dest=\"threshold_blocking\", type=float, required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--top-k-blocking\",
+          dest=\"top_k_blocking\", type=int, required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--batch-size-blocking\",
+          dest=\"batch_size_blocking\", type=int, required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--output-pairs-csv\",
+          dest=\"output_pairs_csv\", type=_make_parent_dirs_and_return_path, required=True,
+          default=argparse.SUPPRESS)\n_parser.add_argument(\"--output-ditto-txt\",
+          dest=\"output_ditto_txt\", type=_make_parent_dirs_and_return_path, required=True,
+          default=argparse.SUPPRESS)\n_parser.add_argument(\"--table-reference-txt\",
+          dest=\"table_reference_txt\", type=_make_parent_dirs_and_return_path, required=True,
+          default=argparse.SUPPRESS)\n_parser.add_argument(\"--table-source-txt\",
+          dest=\"table_source_txt\", type=_make_parent_dirs_and_return_path, required=True,
+          default=argparse.SUPPRESS)\n_parser.add_argument(\"--table-reference-vec\",
+          dest=\"table_reference_vec\", type=_make_parent_dirs_and_return_path, required=True,
+          default=argparse.SUPPRESS)\n_parser.add_argument(\"--table-source-vec\",
+          dest=\"table_source_vec\", type=_make_parent_dirs_and_return_path, required=True,
+          default=argparse.SUPPRESS)\n_parsed_args = vars(_parser.parse_args())\n\n_outputs
+          = run_blocking_component(**_parsed_args)\n"], "image": "172.17.232.16:9001/ditto:latest"}},
+          "inputs": [{"name": "table_reference_csv", "type": "CSV"}, {"name": "table_source_csv",
+          "type": "CSV"}, {"name": "model_name_blocking", "type": "String"}, {"name":
+          "threshold_blocking", "type": "Float"}, {"name": "top_k_blocking", "type":
+          "Integer"}, {"name": "batch_size_blocking", "type": "Integer"}], "name":
+          "Run blocking component", "outputs": [{"name": "output_pairs_csv", "type":
+          "CSV"}, {"name": "output_ditto_txt", "type": "String"}, {"name": "table_reference_txt",
+          "type": "String"}, {"name": "table_source_txt", "type": "String"}, {"name":
+          "table_reference_vec", "type": "String"}, {"name": "table_source_vec", "type":
+          "String"}]}', pipelines.kubeflow.org/component_ref: '{}', pipelines.kubeflow.org/arguments.parameters: '{"batch_size_blocking":
+          "{{inputs.parameters.batch_size_blocking}}", "model_name_blocking": "{{inputs.parameters.model_name_blocking}}",
+          "threshold_blocking": "{{inputs.parameters.threshold_blocking}}", "top_k_blocking":
+          "{{inputs.parameters.top_k_blocking}}"}'}
+      labels:
+        pipelines.kubeflow.org/kfp_sdk_version: 1.8.0
+        pipelines.kubeflow.org/pipeline-sdk-type: kfp
+        pipelines.kubeflow.org/enable_caching: "true"
+  arguments:
+    parameters:
+    - {name: model_path}
+    - {name: reference_table_csv}
+    - {name: source_table_csv}
+    - {name: lm}
+    - {name: max_len}
+    - {name: model_name_blocking}
+    - {name: threshold_blocking}
+    - {name: top_k_blocking}
+    - {name: batch_size_blocking}
+    artifacts:
+    - name: reference_table_csv
+      raw: {data: '{{workflow.parameters.reference_table_csv}}'}
+    - name: source_table_csv
+      raw: {data: '{{workflow.parameters.source_table_csv}}'}
+  serviceAccountName: pipeline-runner
