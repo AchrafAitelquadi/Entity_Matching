@@ -235,7 +235,6 @@ class Augmenter:
             text = right + ' [SEP] ' + left
 
         # tokenize the sentence
-        current = ''
         tokens = text.split(' ')
 
         # avoid the special tokens

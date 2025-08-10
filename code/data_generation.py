@@ -1,7 +1,6 @@
 import re
 import os
 import random
-import numpy as np
 import pandas as pd
 from faker import Faker
 faker = Faker('fr_FR')
@@ -20,20 +19,6 @@ def introduce_typos(text):
         return text
     
     text = str(text)
-    
-    # Common typo patterns
-    typo_patterns = [
-        # Character substitutions (keyboard proximity)
-        ('a', 'e'), ('e', 'a'), ('i', 'y'), ('o', '0'), ('0', 'o'),
-        ('u', 'i'), ('m', 'n'), ('n', 'm'), ('b', 'v'), ('v', 'b'),
-        ('c', 'k'), ('k', 'c'), ('s', 'z'), ('z', 's'),
-        # Double letters
-        ('l', 'll'), ('s', 'ss'), ('t', 'tt'), ('n', 'nn'),
-        # Missing letters (deletions)
-        ('th', 't'), ('ch', 'c'), ('qu', 'q'), ('tion', 'ion'),
-        # Transpositions
-        ('er', 're'), ('le', 'el'), ('on', 'no'), ('it', 'ti'),
-    ]
     
     # Apply random typos (30% chance)
     if random.random() < 0.3:

@@ -1,29 +1,16 @@
-import re
 import os
 import csv
 import time
-import nltk
-import spacy
 import torch
-import pickle
-import random
 import unicodedata
 import numpy as np
 import pandas as pd
 import torch.nn as nn
 from tqdm import tqdm
-from faker import Faker
 from torch.utils import data
 from torch.optim import AdamW
-from argparse import Namespace
-from collections import Counter
-import matplotlib.pyplot as plt
-from nltk.corpus import stopwords
 import sklearn.metrics as metrics
-from sklearn.model_selection import train_test_split
-from sentence_transformers import SentenceTransformer
-from sklearn.feature_extraction.text import TfidfVectorizer
-from transformers import AutoModel, get_linear_schedule_with_warmup, AutoTokenizer
+from transformers import get_linear_schedule_with_warmup, AutoTokenizer
 
 
 from model import DittoModel
