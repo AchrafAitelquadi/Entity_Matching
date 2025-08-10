@@ -343,7 +343,7 @@ def predict(model, tokenizer, left_str, right_str, device, threshold, max_len):
     return prediction, match_prob
 
 
-def run_inference(model_path, left_str, right_str, lm, alpha_aug, max_len, threshold=None):
+def run_inference(model_path, left_str, right_str, lm, max_len, threshold=None):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model, saved_threshold = load_model_and_threshold(model_path, device, lm)
 
