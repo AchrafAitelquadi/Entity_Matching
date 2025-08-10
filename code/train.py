@@ -131,8 +131,8 @@ if hp.save_model:
     model_path = f"{hp.base_path_blocking}/logs/{hp.task}/model.pt"
     left_str = "COL full_name VAL Michelle Andre COL cin VAL EX717542 COL date_of_birth VAL 1991-02-12 COL place_of_birth VAL Tanger COL cnss_number VAL 36759250 COL email VAL isaacriviere@example.org COL phone VAL +33 3 28 68 25 81 COL address VAL 9, rue Blot COL city VAL Marrakech COL employer_name VAL Menard"
     right_str = "COL full_name VAL Clémence Parent Le Rey COL cin VAL IR469929 COL date_of_birth VAL 1994-06-27 COL place_of_birth VAL Kenitra COL cnss_number VAL 25591412 COL email VAL jweber@example.org COL phone VAL 01 45 59 74 83 COL address VAL rue de Marchand COL city VAL Marrakech COL employer_name VAL Mendès Potier et Fils"
-    run_inference(model_path, left_str, right_str)
+    run_inference(model_path, left_str, right_str, lm=hp.lm, max_len=hp.max_len)
     print("--------------------------------------")
     left_str="COL full_name VAL Audrey Brunet COL cin VAL XE204809 COL date_of_birth VAL 1964-01-04 COL place_of_birth VAL Agadir COL cnss_number VAL 29199351 COL email VAL marcelle91@example.org COL phone VAL +33 7 93 72 16 30 COL address VAL 97, boulevard Colin COL city VAL Marrakech COL employer_name VAL Guillet"
     right_str="COL full_name VAL audrey brunet COL cin VAL XE204809 COL date_of_birth VAL 1964-01-04 COL place_of_birth VAL Agadir COL cnss_number VAL nan COL email VAL marcelle91@example.org COL phone VAL g33 7 93 72 16 30 COL address VAL 97, boulevard Colin COL city VAL Marrakech COL employer_name VAL Guillet"
-    run_inference(model_path, left_str, right_str)
+    run_inference(model_path, left_str, right_str, lm=hp.lm, max_len=hp.max_len)
