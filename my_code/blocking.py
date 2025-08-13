@@ -89,8 +89,9 @@ def run_blocking(hp):
 
     print(f"\n✅ Blocking completed: {len(pairs)} balanced pairs written to:")
 
-    dataset_csv_dir = hp.dataset_csv_dir
-    dataset_txt_dir = hp.dataset_txt_dir
+    dataset_csv_dir = os.path.join(hp.dataset_csv_dir, hp.task)
+    dataset_txt_dir = os.path.join(hp.dataset_txt_dir, hp.task)
+    print(dataset_csv_dir)
     os.makedirs(dataset_csv_dir, exist_ok=True)
     os.makedirs(dataset_txt_dir, exist_ok=True)
 
