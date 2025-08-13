@@ -3,7 +3,7 @@ from collections import Counter
 from nltk.corpus import stopwords
 import nltk
 from sklearn.feature_extraction.text import TfidfVectorizer
-from utils import get_tokenizer
+from .utils import get_tokenizer
 nltk.download('stopwords')
 stopwords = set(stopwords.words('english'))
 class Summarizer:

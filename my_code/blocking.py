@@ -6,7 +6,7 @@ import pandas as pd
 from tqdm import tqdm
 from sklearn.model_selection import train_test_split
 from sentence_transformers import SentenceTransformer
-from utils import csv_to_ditto_txt, evaluate_blocking_metrics, dump_ditto_txt, dump_pairs_csv
+from .utils import csv_to_ditto_txt, evaluate_blocking_metrics, dump_ditto_txt, dump_pairs_csv
 
 
 def encode_all(input_path, out_path, model, overwrite=True):

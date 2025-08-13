@@ -1,7 +1,7 @@
 import torch
 from torch.utils import data
-from utils import get_tokenizer
-from augmenter import Augmenter
+from .utils import get_tokenizer
+from .augmenter import Augmenter
 
 class DittoDataset(data.Dataset):
     """EM Dataset"""

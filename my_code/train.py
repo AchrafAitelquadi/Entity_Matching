@@ -1,13 +1,13 @@
 from argparse import Namespace
-from data_generation import generate_tables
-from blocking import run_blocking
+from .data_generation import generate_tables
+from .blocking import run_blocking
 import random
-from summarizer import Summarizer
-from DK import ProductDKInjector, GeneralDKInjector
-from dataset import DittoDataset
+from .summarizer import Summarizer
+from .DK import ProductDKInjector, GeneralDKInjector
+from .dataset import DittoDataset
 import time
-from utils import train
-from utils import run_inference
+from .utils import train
+from .utils import run_inference
 
 # ---------------------------------------------------------------------------------------------
 # TO UPDATE TO THE PROJECT ROOT
@@ -72,9 +72,9 @@ hp = Namespace(
 
 configs = [{
     "name": "Generated_data",
-    "trainset": f"{hp.base_path_blocking}/dataset_ditto_txt/train.txt",
-    "validset": f"{hp.base_path_blocking}/dataset_ditto_txt/valid.txt",
-    "testset": f"{hp.base_path_blocking}/dataset_ditto_txt/test.txt"
+    "trainset": f"{hp.base_path_blocking}/dataset_ditto_txt/{hp.task}/train.txt",
+    "validset": f"{hp.base_path_blocking}/dataset_ditto_txt/{hp.task}/valid.txt",
+    "testset": f"{hp.base_path_blocking}/dataset_ditto_txt/{hp.task}/test.txt"
 }]
 
 

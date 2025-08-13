@@ -13,7 +13,7 @@ import sklearn.metrics as metrics
 from transformers import get_linear_schedule_with_warmup, AutoTokenizer
 
 
-from model import DittoModel
+from .model import DittoModel
 lm_mp = {
     "roberta" : "roberta-base",
     "distilbert" : "distilbert-base-uncased"
