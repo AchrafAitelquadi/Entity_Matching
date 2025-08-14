@@ -11,6 +11,7 @@ from torch.utils import data
 from torch.optim import AdamW
 import sklearn.metrics as metrics
 from transformers import get_linear_schedule_with_warmup, AutoTokenizer
+import matplotlib.pyplot as plt
 
 
 from .model import DittoModel
@@ -178,7 +179,7 @@ def train(trainset, validset, testset, run_tag, hp):
     best_dev_f1 = best_test_f1 = 0.0
     
     lm_name = hp.lm.replace('/', '_').replace('-', '_')
-    csv_filename = f"bs{hp.batch_size}_ep{hp.epochs}_lm{lm_name}_alpha{hp.alpha_aug}.csv"
+    csv_filename = f"{hp.task}_bs{hp.batch_size}_ep{hp.epochs}_lm{lm_name}_alpha{hp.alpha_aug}.csv"
     csv_log_path = os.path.join(hp.base_path_blocking, hp.logdir, hp.task, csv_filename)
 
     os.makedirs(os.path.dirname(csv_log_path), exist_ok=True)
@@ -215,7 +216,7 @@ def train(trainset, validset, testset, run_tag, hp):
                     os.makedirs(directory)
 
                 # save the checkpoints for each component
-                ckpt_path = os.path.join(hp.base_path_blocking, hp.logdir, hp.task, 'model.pt')
+                ckpt_path = os.path.join(hp.base_path_blocking, hp.logdir, hp.task, f'model_{hp.task}_bs{hp.batch_size}_ep{hp.epochs}_lm{lm_name}_alpha{hp.alpha_aug}.pt')
                 ckpt = {'model': model.state_dict(),
                         'optimizer': optimizer.state_dict(),
                         'scheduler': scheduler.state_dict(),
@@ -241,6 +242,7 @@ def train(trainset, validset, testset, run_tag, hp):
                 round(val_acc, 4), round(val_precision, 4), round(val_recall, 4), round(dev_f1, 4), round(threshold, 4),
                 round(test_acc, 4), round(test_precision, 4), round(test_recall, 4), round(test_f1, 4)
             ])
+    return csv_log_path
 
 def normalize_word(word):
     word = word.lower()
@@ -356,4 +358,109 @@ def run_inference(model_path, left_str, right_str, lm, max_len, threshold=None):
 
     print("prediction: ", pred)
     print("probability: ", prob)
-    
+
+def plot_metrics(csv_path, save_dir=None):
+    """
+    Plots training and evaluation metrics over epochs.
+
+    Args:
+        csv_path (str): Path to the CSV file containing logged metrics.
+        save_dir (str, optional): Directory to save the plot image.
+    """
+    df = pd.read_csv(csv_path)
+    epochs = df["epoch"]
+
+    num_rows = 3
+    num_cols = 3
+    plt.figure(figsize=(18, 12))
+
+    # 1. F1 Scores
+    plt.subplot(num_rows, num_cols, 1)
+    plt.plot(epochs, df["val_f1"], label="Validation F1", marker='o')
+    plt.plot(epochs, df["test_f1"], label="Test F1", marker='o')
+    plt.title("F1 Scores")
+    plt.xlabel("Epoch")
+    plt.ylabel("F1 Score")
+    plt.legend()
+    plt.grid(True)
+
+    # 2. Accuracy
+    plt.subplot(num_rows, num_cols, 2)
+    plt.plot(epochs, df["val_accuracy"], label="Validation Accuracy", marker='o')
+    plt.plot(epochs, df["test_accuracy"], label="Test Accuracy", marker='o')
+    plt.title("Accuracy")
+    plt.xlabel("Epoch")
+    plt.ylabel("Accuracy")
+    plt.legend()
+    plt.grid(True)
+
+    # 3. Precision
+    plt.subplot(num_rows, num_cols, 3)
+    plt.plot(epochs, df["val_precision"], label="Validation Precision", marker='o')
+    plt.plot(epochs, df["test_precision"], label="Test Precision", marker='o')
+    plt.title("Precision")
+    plt.xlabel("Epoch")
+    plt.ylabel("Precision")
+    plt.legend()
+    plt.grid(True)
+
+    # 4. Recall
+    plt.subplot(num_rows, num_cols, 4)
+    plt.plot(epochs, df["val_recall"], label="Validation Recall", marker='o')
+    plt.plot(epochs, df["test_recall"], label="Test Recall", marker='o')
+    plt.title("Recall")
+    plt.xlabel("Epoch")
+    plt.ylabel("Recall")
+    plt.legend()
+    plt.grid(True)
+
+    # 5. Threshold
+    plt.subplot(num_rows, num_cols, 5)
+    plt.plot(epochs, df["threshold"], label="Threshold", marker='o', color='purple')
+    plt.title("Threshold over Epochs")
+    plt.xlabel("Epoch")
+    plt.ylabel("Threshold")
+    plt.legend()
+    plt.grid(True)
+
+    # 6. Train Loss
+    if "train_loss" in df.columns:
+        plt.subplot(num_rows, num_cols, 6)
+        plt.plot(epochs, df["train_loss"], label="Train Loss", marker='o', color='brown')
+        plt.title("Training Loss")
+        plt.xlabel("Epoch")
+        plt.ylabel("Loss")
+        plt.legend()
+        plt.grid(True)
+
+    # 7. Learning Rate
+    if "learning_rate" in df.columns:
+        plt.subplot(num_rows, num_cols, 7)
+        plt.plot(epochs, df["learning_rate"], label="Learning Rate", marker='o', color='green')
+        plt.title("Learning Rate")
+        plt.xlabel("Epoch")
+        plt.ylabel("LR")
+        plt.legend()
+        plt.grid(True)
+
+    # 8. Epoch Time
+    if "epoch_time_sec" in df.columns:
+        plt.subplot(num_rows, num_cols, 8)
+        plt.plot(epochs, df["epoch_time_sec"], label="Epoch Time (sec)", marker='o', color='orange')
+        plt.title("Epoch Duration")
+        plt.xlabel("Epoch")
+        plt.ylabel("Seconds")
+        plt.legend()
+        plt.grid(True)
+
+    plt.tight_layout()
+
+    if save_dir:
+        os.makedirs(save_dir, exist_ok=True)
+        filename = os.path.basename(csv_path).replace(".csv", ".png")
+        plot_path = os.path.join(save_dir, filename)
+        plt.savefig(plot_path)
+        print(f"[✔] Plot saved to {plot_path}")
+    else:
+        plt.show()
+

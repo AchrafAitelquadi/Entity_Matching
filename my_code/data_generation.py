@@ -387,7 +387,8 @@ def generate_tables(base_path, n_total=2000, match_ratio=0.3):
     print("=" * 50)
 
     # Create folders
-    os.makedirs(os.path.join(base_path, "data"), exist_ok=True)
+    folder_path = os.path.join(base_path, "data", "Generated_data")
+    os.makedirs(folder_path, exist_ok=True)
 
     # Generate base persons
     base_persons = [generate_person() for _ in range(n_matches)]
@@ -442,9 +443,9 @@ def generate_tables(base_path, n_total=2000, match_ratio=0.3):
     random.shuffle(source_table)
 
     # Save
-    pd.DataFrame(reference_table).to_csv(os.path.join(base_path, "data", "reference_table.csv"), index=False)
-    pd.DataFrame(source_table).to_csv(os.path.join(base_path, "data", "source_table.csv"), index=False)
-    pd.DataFrame(ground_truth).to_csv(os.path.join(base_path, "data", "ground_truth.csv"), index=False)
+    pd.DataFrame(reference_table).to_csv(os.path.join(folder_path, "reference_table.csv"), index=False)
+    pd.DataFrame(source_table).to_csv(os.path.join(folder_path, "source_table.csv"), index=False)
+    pd.DataFrame(ground_truth).to_csv(os.path.join(folder_path, "ground_truth.csv"), index=False)
 
     # Print summary
     print("\n📁 Files saved")

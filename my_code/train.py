@@ -7,11 +7,11 @@ from .DK import ProductDKInjector, GeneralDKInjector
 from .dataset import DittoDataset
 import time
 from .utils import train
-from .utils import run_inference
 
 # ---------------------------------------------------------------------------------------------
 # TO UPDATE TO THE PROJECT ROOT
 base_path_blocking = "D:/Study/ENSIAS/stage_2/ER/ditto/resultat"
+task = "Generated_data"
 # ---------------------------------------------------------------------------------------------
 
 
@@ -51,7 +51,7 @@ hp = Namespace(
 
     # Logging and task info
     logdir="./logs",
-    task="Generated_data",
+    task=task,
 
     # Hyperparameters for training
     batch_size=32,
@@ -69,19 +69,22 @@ hp = Namespace(
     overwrite=True
 )
 
-
 configs = [{
     "name": "Generated_data",
     "trainset": f"{hp.base_path_blocking}/dataset_ditto_txt/{hp.task}/train.txt",
     "validset": f"{hp.base_path_blocking}/dataset_ditto_txt/{hp.task}/valid.txt",
     "testset": f"{hp.base_path_blocking}/dataset_ditto_txt/{hp.task}/test.txt"
-}]
-
+},
+{
+    "name": "data_1",
+    "trainset": f"{hp.base_path_blocking}/dataset_ditto_txt/{hp.task}/train.txt",
+    "validset": f"{hp.base_path_blocking}/dataset_ditto_txt/{hp.task}/valid.txt",
+    "testset": f"{hp.base_path_blocking}/dataset_ditto_txt/{hp.task}/test.txt"
+}
+]
 
 configs = {conf['name'] : conf for conf in configs}
 config = configs[hp.task]
-
-
 
 def run_full_pipeline(hp, config):
     trainset = config['trainset']
@@ -89,10 +92,6 @@ def run_full_pipeline(hp, config):
     testset = config['testset']
     random.seed(42)  # For reproducibility
 
-    #---------------------------------------------------------------------------------------------
-    #TO UPDATE IF NEEDED FOR DATA GENERATION
-    generate_tables(base_path=hp.base_path_blocking, n_total=2000, match_ratio=0.3)
-    #---------------------------------------------------------------------------------------------
     run_blocking(hp)
     if hp.summarize:
         summarizer = Summarizer(config, hp.lm)
@@ -124,15 +123,12 @@ def run_full_pipeline(hp, config):
 
     print(f"Trainig time: {round(t2-t1, 3)} seconds")
 
-run_full_pipeline(hp, config)
 
-if hp.save_model:
-    print("====================== INFERENCE 2 EXAMPLES ======================")
-    model_path = f"{hp.base_path_blocking}/logs/{hp.task}/model.pt"
-    left_str = "COL full_name VAL Michelle Andre COL cin VAL EX717542 COL date_of_birth VAL 1991-02-12 COL place_of_birth VAL Tanger COL cnss_number VAL 36759250 COL email VAL isaacriviere@example.org COL phone VAL +33 3 28 68 25 81 COL address VAL 9, rue Blot COL city VAL Marrakech COL employer_name VAL Menard"
-    right_str = "COL full_name VAL Clémence Parent Le Rey COL cin VAL IR469929 COL date_of_birth VAL 1994-06-27 COL place_of_birth VAL Kenitra COL cnss_number VAL 25591412 COL email VAL jweber@example.org COL phone VAL 01 45 59 74 83 COL address VAL rue de Marchand COL city VAL Marrakech COL employer_name VAL Mendès Potier et Fils"
-    run_inference(model_path, left_str, right_str, lm=hp.lm, max_len=hp.max_len)
-    print("--------------------------------------")
-    left_str="COL full_name VAL Audrey Brunet COL cin VAL XE204809 COL date_of_birth VAL 1964-01-04 COL place_of_birth VAL Agadir COL cnss_number VAL 29199351 COL email VAL marcelle91@example.org COL phone VAL +33 7 93 72 16 30 COL address VAL 97, boulevard Colin COL city VAL Marrakech COL employer_name VAL Guillet"
-    right_str="COL full_name VAL audrey brunet COL cin VAL XE204809 COL date_of_birth VAL 1964-01-04 COL place_of_birth VAL Agadir COL cnss_number VAL nan COL email VAL marcelle91@example.org COL phone VAL g33 7 93 72 16 30 COL address VAL 97, boulevard Colin COL city VAL Marrakech COL employer_name VAL Guillet"
-    run_inference(model_path, left_str, right_str, lm=hp.lm, max_len=hp.max_len)
+def main(hp, config):
+    #---------------------------------------------------------------------------------------------
+    #TO UPDATE IF NEEDED FOR DATA GENERATION
+    if hp.task == "Generated_data":
+        generate_tables(base_path=hp.base_path_blocking, n_total=2000, match_ratio=0.3)
+    #---------------------------------------------------------------------------------------------
+    #If the data already exist make sure to add the task name to configs and also use it hp.task and put the data in base_path_blocking/data/   (reference and source)
+    run_full_pipeline(hp, config)

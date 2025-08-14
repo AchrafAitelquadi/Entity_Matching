@@ -65,12 +65,13 @@ def run_blocking(hp):
     )
 
     # Step 5: Evaluate
-    evaluate_blocking_metrics(
-        pairs,
-        ground_truth_path=hp.ground_truth_csv,
-        ref_table_path=hp.table_reference_csv,
-        data_table_path=hp.table_source_csv
-    )
+    if hp.task == "Generated_data":
+        evaluate_blocking_metrics(
+            pairs,
+            ground_truth_path=hp.ground_truth_csv,
+            ref_table_path=hp.table_reference_csv,
+            data_table_path=hp.table_source_csv
+        )
 
     positive_pairs = [p for p in pairs if p[3] == 1]
     negative_pairs = [p for p in pairs if p[3] == 0]
@@ -91,7 +92,7 @@ def run_blocking(hp):
 
     dataset_csv_dir = os.path.join(hp.dataset_csv_dir, hp.task)
     dataset_txt_dir = os.path.join(hp.dataset_txt_dir, hp.task)
-    print(dataset_csv_dir)
+    
     os.makedirs(dataset_csv_dir, exist_ok=True)
     os.makedirs(dataset_txt_dir, exist_ok=True)
 
