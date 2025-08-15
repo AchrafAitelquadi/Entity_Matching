@@ -361,7 +361,7 @@ def run_inference(model_path, left_str, right_str, lm, max_len, threshold=None):
 
 def plot_metrics(csv_path, save_dir=None):
     """
-    Plots training and evaluation metrics over epochs.
+    Plots all metrics from a CSV over epochs.
 
     Args:
         csv_path (str): Path to the CSV file containing logged metrics.
@@ -370,88 +370,24 @@ def plot_metrics(csv_path, save_dir=None):
     df = pd.read_csv(csv_path)
     epochs = df["epoch"]
 
-    num_rows = 3
+    # Remove the 'epoch' column for plotting
+    metrics = [col for col in df.columns if col != "epoch"]
+
+    # Determine grid size
+    num_metrics = len(metrics)
     num_cols = 3
-    plt.figure(figsize=(18, 12))
+    num_rows = (num_metrics + num_cols - 1) // num_cols  # ceiling division
 
-    # 1. F1 Scores
-    plt.subplot(num_rows, num_cols, 1)
-    plt.plot(epochs, df["val_f1"], label="Validation F1", marker='o')
-    plt.plot(epochs, df["test_f1"], label="Test F1", marker='o')
-    plt.title("F1 Scores")
-    plt.xlabel("Epoch")
-    plt.ylabel("F1 Score")
-    plt.legend()
-    plt.grid(True)
+    plt.figure(figsize=(6 * num_cols, 4 * num_rows))
 
-    # 2. Accuracy
-    plt.subplot(num_rows, num_cols, 2)
-    plt.plot(epochs, df["val_accuracy"], label="Validation Accuracy", marker='o')
-    plt.plot(epochs, df["test_accuracy"], label="Test Accuracy", marker='o')
-    plt.title("Accuracy")
-    plt.xlabel("Epoch")
-    plt.ylabel("Accuracy")
-    plt.legend()
-    plt.grid(True)
-
-    # 3. Precision
-    plt.subplot(num_rows, num_cols, 3)
-    plt.plot(epochs, df["val_precision"], label="Validation Precision", marker='o')
-    plt.plot(epochs, df["test_precision"], label="Test Precision", marker='o')
-    plt.title("Precision")
-    plt.xlabel("Epoch")
-    plt.ylabel("Precision")
-    plt.legend()
-    plt.grid(True)
-
-    # 4. Recall
-    plt.subplot(num_rows, num_cols, 4)
-    plt.plot(epochs, df["val_recall"], label="Validation Recall", marker='o')
-    plt.plot(epochs, df["test_recall"], label="Test Recall", marker='o')
-    plt.title("Recall")
-    plt.xlabel("Epoch")
-    plt.ylabel("Recall")
-    plt.legend()
-    plt.grid(True)
-
-    # 5. Threshold
-    plt.subplot(num_rows, num_cols, 5)
-    plt.plot(epochs, df["threshold"], label="Threshold", marker='o', color='purple')
-    plt.title("Threshold over Epochs")
-    plt.xlabel("Epoch")
-    plt.ylabel("Threshold")
-    plt.legend()
-    plt.grid(True)
-
-    # 6. Train Loss
-    if "train_loss" in df.columns:
-        plt.subplot(num_rows, num_cols, 6)
-        plt.plot(epochs, df["train_loss"], label="Train Loss", marker='o', color='brown')
-        plt.title("Training Loss")
+    for i, metric in enumerate(metrics, start=1):
+        plt.subplot(num_rows, num_cols, i)
+        plt.plot(epochs, df[metric], marker='o', label=metric)
+        plt.title(metric.replace("_", " ").title())
         plt.xlabel("Epoch")
-        plt.ylabel("Loss")
-        plt.legend()
+        plt.ylabel(metric.replace("_", " ").title())
         plt.grid(True)
-
-    # 7. Learning Rate
-    if "learning_rate" in df.columns:
-        plt.subplot(num_rows, num_cols, 7)
-        plt.plot(epochs, df["learning_rate"], label="Learning Rate", marker='o', color='green')
-        plt.title("Learning Rate")
-        plt.xlabel("Epoch")
-        plt.ylabel("LR")
         plt.legend()
-        plt.grid(True)
-
-    # 8. Epoch Time
-    if "epoch_time_sec" in df.columns:
-        plt.subplot(num_rows, num_cols, 8)
-        plt.plot(epochs, df["epoch_time_sec"], label="Epoch Time (sec)", marker='o', color='orange')
-        plt.title("Epoch Duration")
-        plt.xlabel("Epoch")
-        plt.ylabel("Seconds")
-        plt.legend()
-        plt.grid(True)
 
     plt.tight_layout()
 
