@@ -12,7 +12,7 @@ from torch.optim import AdamW
 import sklearn.metrics as metrics
 from transformers import get_linear_schedule_with_warmup, AutoTokenizer
 import matplotlib.pyplot as plt
-
+from datetime import datetime
 
 from .model import DittoModel
 lm_mp = {
@@ -178,8 +178,9 @@ def train(trainset, validset, testset, run_tag, hp):
 
     best_dev_f1 = best_test_f1 = 0.0
     
+    date_str = datetime.now().strftime("%Y-%m-%d")
     lm_name = hp.lm.replace('/', '_').replace('-', '_')
-    csv_filename = f"{hp.task}_bs{hp.batch_size}_ep{hp.epochs}_lm{lm_name}_alpha{hp.alpha_aug}.csv"
+    csv_filename = f"{hp.task}_bs{hp.batch_size}_ep{hp.epochs}_lm{lm_name}_alpha{hp.alpha_aug}_date{date_str}.csv"
     csv_log_path = os.path.join(hp.base_path_blocking, hp.logdir, hp.task, csv_filename)
 
     os.makedirs(os.path.dirname(csv_log_path), exist_ok=True)
@@ -216,7 +217,7 @@ def train(trainset, validset, testset, run_tag, hp):
                     os.makedirs(directory)
 
                 # save the checkpoints for each component
-                ckpt_path = os.path.join(hp.base_path_blocking, hp.logdir, hp.task, f'model_{hp.task}_bs{hp.batch_size}_ep{hp.epochs}_lm{lm_name}_alpha{hp.alpha_aug}.pt')
+                ckpt_path = os.path.join(hp.base_path_blocking, hp.logdir, hp.task, f'model_{hp.task}_bs{hp.batch_size}_ep{hp.epochs}_lm{lm_name}_alpha{hp.alpha_aug}_date{date_str}.pt')
                 ckpt = {'model': model.state_dict(),
                         'optimizer': optimizer.state_dict(),
                         'scheduler': scheduler.state_dict(),
@@ -362,6 +363,7 @@ def run_inference(model_path, left_str, right_str, lm, max_len, threshold=None):
 def plot_metrics(csv_path, save_dir=None):
     """
     Plots all metrics from a CSV over epochs.
+    Validation and test metrics of the same type are shown on the same plot.
 
     Args:
         csv_path (str): Path to the CSV file containing logged metrics.
@@ -370,22 +372,48 @@ def plot_metrics(csv_path, save_dir=None):
     df = pd.read_csv(csv_path)
     epochs = df["epoch"]
 
-    # Remove the 'epoch' column for plotting
-    metrics = [col for col in df.columns if col != "epoch"]
+    # Separate metrics
+    val_test_pairs = {}  # group val/test together
+    single_metrics = []  # standalone metrics
 
-    # Determine grid size
-    num_metrics = len(metrics)
+    for col in df.columns:
+        if col in ["epoch"]:
+            continue
+        if col.startswith("val_"):
+            metric_name = col.replace("val_", "")
+            val_test_pairs.setdefault(metric_name, {})["val"] = col
+        elif col.startswith("test_"):
+            metric_name = col.replace("test_", "")
+            val_test_pairs.setdefault(metric_name, {})["test"] = col
+        else:
+            single_metrics.append(col)
+
+    # Prepare final plotting list
+    all_plots = single_metrics + list(val_test_pairs.keys())
+
+    num_metrics = len(all_plots)
     num_cols = 3
-    num_rows = (num_metrics + num_cols - 1) // num_cols  # ceiling division
+    num_rows = (num_metrics + num_cols - 1) // num_cols
 
     plt.figure(figsize=(6 * num_cols, 4 * num_rows))
 
-    for i, metric in enumerate(metrics, start=1):
+    for i, metric in enumerate(all_plots, start=1):
         plt.subplot(num_rows, num_cols, i)
-        plt.plot(epochs, df[metric], marker='o', label=metric)
-        plt.title(metric.replace("_", " ").title())
+
+        if metric in val_test_pairs:  # paired metrics
+            pair = val_test_pairs[metric]
+            if "val" in pair:
+                plt.plot(epochs, df[pair["val"]], marker='o', label="Validation")
+            if "test" in pair:
+                plt.plot(epochs, df[pair["test"]], marker='s', label="Test")
+            plt.title(metric.title())
+            plt.ylabel(metric.title())
+        else:  # single metric
+            plt.plot(epochs, df[metric], marker='o', label=metric)
+            plt.title(metric.replace("_", " ").title())
+            plt.ylabel(metric.replace("_", " ").title())
+
         plt.xlabel("Epoch")
-        plt.ylabel(metric.replace("_", " ").title())
         plt.grid(True)
         plt.legend()
 
@@ -393,7 +421,7 @@ def plot_metrics(csv_path, save_dir=None):
 
     if save_dir:
         os.makedirs(save_dir, exist_ok=True)
-        filename = os.path.basename(csv_path).replace(".csv", ".png")
+        filename = os.path.basename(csv_path).replace(".csv", "_metrics.png")
         plot_path = os.path.join(save_dir, filename)
         plt.savefig(plot_path)
         print(f"[✔] Plot saved to {plot_path}")
