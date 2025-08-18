@@ -103,7 +103,7 @@ You should also change the `task` name depending on your data source:
         },
         # New task
         {
-            "name": "Custoemr_data",
+            "name": "Customer_data",
             "trainset": f"{hp.base_path_blocking}/dataset_ditto_txt/{hp.task}/train.txt",
             "validset": f"{hp.base_path_blocking}/dataset_ditto_txt/{hp.task}/valid.txt",
             "testset": f"{hp.base_path_blocking}/dataset_ditto_txt/{hp.task}/test.txt"
