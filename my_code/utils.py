@@ -253,6 +253,7 @@ def normalize_word(word):
     
 def csv_to_ditto_txt(csv_path, out_txt_path):
     df = pd.read_csv(csv_path)
+    df.drop(columns=["id"])
     os.makedirs(os.path.dirname(out_txt_path), exist_ok=True)
     
     with open(out_txt_path, "w", encoding="utf-8") as f:

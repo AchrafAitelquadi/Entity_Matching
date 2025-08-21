@@ -1,8 +1,10 @@
 import re
 import os
 import random
+import json
 import pandas as pd
 from faker import Faker
+import string
 faker = Faker('fr_FR')
 
 cities = ['Casablanca', 'Rabat', 'Marrakech', 'Agadir', 'Tanger', 'Oujda', 'Kenitra']
@@ -454,3 +456,175 @@ def generate_tables(base_path, n_total=2000, match_ratio=0.3):
     print(f" - Ground Truth: {len(ground_truth)} pairs")
     print(f"   - Matches: {n_matches}")
     print(f"   - Non-matches: {len(ground_truth) - n_matches}")
+
+
+
+#======================= Second data generation approach =======================
+
+
+
+def random_digits(n):
+    return ''.join(random.choices(string.digits, k=n))
+
+def random_letters(n):
+    return ''.join(random.choices(string.ascii_uppercase, k=n))
+
+def random_alnum(n):
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=n))
+
+def generate_row(primary_key=None):
+    with open("cities.json", "r", encoding="utf-8") as f:
+        city_codes = json.load(f)
+    is_company = random.random() < 0.5
+    if is_company:
+        raison_sociale = faker.company().upper()
+        nom = None
+        prenoms = None
+        nom_prenom_rs = raison_sociale
+    else:
+        nom = faker.last_name().upper()
+        prenoms = faker.first_name().upper()
+        raison_sociale = None
+        nom_prenom_rs = f"{nom} {prenoms}"
+
+    acronym = ''.join([word[0] for word in nom_prenom_rs.split() if word])
+
+    city = random.choice(list(city_codes.keys()))
+    code_city = city_codes[city]
+
+    row = {
+        "primary_key": primary_key if primary_key else random_digits(6),
+        "ifu": random_digits(8),
+        "nom": nom,
+        "prenoms": prenoms,
+        "raison_sociale": raison_sociale,
+        "nom_prenom_rs": nom_prenom_rs,
+        "acronym_nom_prenom_rs": acronym,
+        "adresse": faker.street_address().upper(),
+        "date_naissance": faker.date_of_birth(minimum_age=18, maximum_age=65).strftime("%Y-%m-%d"),
+        "ice": random_digits(random.choice([12, 13])),
+        "num_cin": random_letters(random.choice([1, 2])) + random_digits(random.choice([4, 5, 6])),
+        "num_ce": random_alnum(random.choice([8, 9])),
+        "numero_adhesion_cnss": random_digits(9),
+        "num_cnss": random_digits(7),
+        "num_ppr": random_digits(7),
+        "centre_registre_commerce": city,
+        "code_centre_registre_commerce": code_city,
+        "num_registre_commerce": random_digits(random.choice([4, 5, 6])),
+        "num_article_patente": random_digits(8),
+        "email_adherent": faker.email().split('@')[0] + '@' + random.choice(["gmail.com", "hotmail.com", "hotmail.fr"]),
+        "num_tel_adherent": random.choice(["05", "06", "07"]) + random_digits(8),
+        "num_passeport": random_letters(2) + random_digits(7)
+    }
+    return row
+
+def add_noise(value, col_name):
+    # Skip noise if empty or None
+    if value is None or (isinstance(value, str) and value.strip() == ""):
+        return value  
+
+    if not isinstance(value, str):
+        value = str(value)
+
+    if random.random() < 0.15:  # 30% chance of no noise
+        return value
+
+    if col_name in ["nom", "prenoms", "raison_sociale", "adresse"]:
+        if len(value) > 3 and random.random() < 0.5:
+            pos = random.randint(0, len(value)-1)
+            value = value[:pos] + random.choice(string.ascii_uppercase) + value[pos+1:]
+        elif random.random() < 0.3:
+            value = value.replace("OU", "O").replace("PH", "F")
+        elif random.random() < 0.2:
+            value = value + random.choice([" ", "  ", "."])
+
+    elif col_name in ["num_cin", "num_tel_adherent", "ifu", "ice", "num_cnss"]:
+        if random.random() < 0.5:
+            pos = random.randint(0, len(value)-1)
+            value = value[:pos] + str(random.randint(0,9)) + value[pos+1:]
+        elif random.random() < 0.3:
+            value = value[:-1]
+
+    elif col_name == "date_naissance":
+        if random.random() < 0.5:
+            try:
+                parts = value.split("-")
+                value = f"{parts[2]}/{parts[1]}/{parts[0][2:]}"  # dd/mm/yy
+            except:
+                pass
+
+    elif col_name == "email_adherent":
+        if "@gmail.com" in value:
+            value = value.replace("gmail.com", random.choice(["gamil.com", "gmial.com"]))
+        elif "@hotmail.com" in value:
+            value = value.replace("hotmail.com", random.choice(["hotnail.com", "hotmai.com"]))
+
+    return value
+
+def generate_tables2(base_path, n_total=2000, match_ratio=0.3):
+    """Generate reference table (cleaner) and source table (noisy)"""
+    n_matches = int(n_total * match_ratio)
+    n_non_matches = n_total - n_matches
+
+    print(f"Generating {n_total} records:")
+    print(f"{n_matches} matching pairs ({match_ratio*100:.0f}%)")
+    print(f"{n_non_matches} non-matching records")
+    print("=" * 50)
+
+    folder_path = os.path.join(base_path, "data", "Generated_data")
+    os.makedirs(folder_path, exist_ok=True)
+
+    # Base records
+    base_records = [generate_row() for _ in range(n_matches)]
+
+    reference_table = []
+    source_table = []
+
+    # Matching pairs
+    for i, rec in enumerate(base_records):
+        ref = rec.copy()
+        ref['id'] = f"REF_{i:04d}"
+        reference_table.append(ref)
+
+        noisy = rec.copy()
+        for col in noisy.keys():
+            if col not in ["id", "primary_key"]:
+                noisy[col] = add_noise(noisy[col], col)
+        noisy['id'] = f"SRC_{i:04d}"
+        source_table.append(noisy)
+
+    # Non-matching source records
+    for i in range(n_matches, n_total):
+        rec = generate_row()
+        for col in rec.keys():
+            if col not in ["id", "primary_key"]:
+                rec[col] = add_noise(rec[col], col)
+        rec['id'] = f"SRC_{i:04d}"
+        source_table.append(rec)
+
+    # Ground truth
+    ground_truth = []
+    for i in range(n_matches):
+        ground_truth.append({"ref_id": f"REF_{i:04d}", "data_id": f"SRC_{i:04d}", "match": 1})
+
+    for _ in range(n_matches * 2):
+        ref_idx = random.randint(0, len(reference_table)-1)
+        data_idx = random.randint(0, len(source_table)-1)
+        ref_id = reference_table[ref_idx]['id']
+        data_id = source_table[data_idx]['id']
+        if not any(gt['ref_id'] == ref_id and gt['data_id'] == data_id for gt in ground_truth):
+            ground_truth.append({"ref_id": ref_id, "data_id": data_id, "match": 0})
+
+    # Save
+    pd.DataFrame(reference_table).to_csv(os.path.join(folder_path, "reference_table.csv"), index=False)
+    pd.DataFrame(source_table).to_csv(os.path.join(folder_path, "source_table.csv"), index=False)
+    pd.DataFrame(ground_truth).to_csv(os.path.join(folder_path, "ground_truth.csv"), index=False)
+
+    print("\n📁 Files saved")
+    print(f" - Reference: {len(reference_table)} rows")
+    print(f" - Source:    {len(source_table)} rows")
+    print(f" - Ground Truth: {len(ground_truth)} pairs")
+    print(f"   - Matches: {n_matches}")
+    print(f"   - Non-matches: {len(ground_truth) - n_matches}")
+
+generate_tables2("D:/Study/ENSIAS/stage_2/ER/ditto/resultat", n_total=2000, match_ratio=0.3)
