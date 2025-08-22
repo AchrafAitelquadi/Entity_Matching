@@ -473,7 +473,7 @@ def random_alnum(n):
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=n))
 
 def generate_row(primary_key=None):
-    with open("cities.json", "r", encoding="utf-8") as f:
+    with open("my_code/cities.json", "r", encoding="utf-8") as f:
         city_codes = json.load(f)
     is_company = random.random() < 0.5
     if is_company:

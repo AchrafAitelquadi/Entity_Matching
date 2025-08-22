@@ -1,0 +1,188 @@
+{
+  "ifu": {
+    "features": [
+      "ifu",
+      "identifiant_fiscal_beneficiaire",
+      "identifiant_fiscal",
+      "ifu_benef_app",
+      "ifu_fournisseur",
+      "ifu_client",
+      "cin_rc_if",
+      "if_source"
+    ],
+    "similarityMethod": "Cosine"
+  },
+  "nom": {
+    "features": [
+      "nom",
+      "nom_prenoms",
+      "nom_prenom_principaux_associes",
+      "nom_prenom",
+      "nom_et_prenom_beneficiaire",
+      "nom_beneficiaire",
+      "nom_responsable",
+      "client_nom",
+      "nom_client"
+    ],
+    "similarityMethod": "Jaro"
+  },
+  "prenoms": {
+    "features": [
+      "prenoms",
+      "prenom_beneficiaire",
+      "prenom",
+      "prenom_responsable",
+      "prenoms_client"
+    ],
+    "similarityMethod": "Jaro"
+  },
+  "raison_sociale": {
+    "features": [
+      "raison_sociale",
+      "raison_sociale_principaux_associes",
+      "raison_sociale_beneficiaire",
+      "raison_sociale_benef_app"
+    ],
+    "similarityMethod": "Jaro"
+  },
+  "nom_prenom_rs": {
+    "features": [
+      "nom_prenom_rs",
+      "nom_ou_raison_sociale",
+      "nom_prenom_raison_sociale_client",
+      "nom_prenom_raisoc",
+      "nom_prenoms_rs_fournisseur",
+      "nom_prenom_raison_sociale_client_opere_retenue_source",
+      "nom_ou_raison_sociale_client",
+      "rs",
+      "nom_rs",
+      "nom_prestataire",
+      "nom_prenoms_ou_raison_sociale_client"
+    ],
+    "similarityMethod": "Jaro"
+  },
+  "acronym_nom_prenom_rs": {
+    "features": [
+      "acronym_nom_prenom_rs"
+    ],
+    "similarityMethod": "Jaro"
+  },
+  "adresse": {
+    "features": [
+      "adresse"
+    ],
+    "similarityMethod": "Jaro"
+  },
+  "date_naissance": {
+    "features": [
+      "date_naissance"
+    ],
+    "similarityMethod": "NeedlemanWunschSimilarity"
+  },
+  "ice": {
+    "features": [
+      "ice",
+      "ice_declarant",
+      "ice_client",
+      "ice_benef_apa",
+      "num_ice_benef_app",
+      "ice_fournisseur",
+      "num_ice_client",
+      "client_ice"
+    ],
+    "similarityMethod": "Cosine"
+  },
+  "num_cin": {
+    "features": [
+      "num_cin",
+      "num_cni",
+      "num_cin_beneficiaire",
+      "num_cni_contribuable",
+      "cin_responsable",
+      "client_cin",
+      "cin_rc",
+      "cin_ou_rc",
+      "cin_source"
+    ],
+    "similarityMethod": "NeedlemanWunschSimilarity"
+  },
+  "num_ce": {
+    "features": [
+      "num_ce",
+      "num_ce_beneficiaire"
+    ],
+    "similarityMethod": "NeedlemanWunschSimilarity"
+  },
+  "numero_adhesion_cnss": {
+    "features": [
+      "numero_adhesion_cnss",
+      "num_aff"
+    ],
+    "similarityMethod": "Cosine"
+  },
+  "num_cnss": {
+    "features": [
+      "num_cnss",
+      "num_cnss_contribuable_"
+    ],
+    "similarityMethod": "Cosine"
+  },
+  "num_ppr": {
+    "features": [
+      "num_ppr"
+    ],
+    "similarityMethod": "Cosine"
+  },
+  "centre_registre_commerce": {
+    "features": [
+      "centre_registre_commerce"
+    ],
+    "similarityMethod": "Jaro"
+  },
+  "code_centre_registre_commerce": {
+    "features": [
+      "code_centre_registre_commerce"
+    ],
+    "similarityMethod": "Cosine"
+  },
+  "num_registre_commerce": {
+    "features": [
+      "num_registre_commerce",
+      "rc_benef_apa",
+      "num_rc_benef_app",
+      "num_rc_contribuable"
+    ],
+    "similarityMethod": "Cosine"
+  },
+  "num_article_patente": {
+    "features": [
+      "num_article_patente"
+    ],
+    "similarityMethod": "Cosine"
+  },
+  "email_adherent": {
+    "features": [
+      "email_adherent",
+      "email_benef_apa",
+      "email_benef_app",
+      "adresse_mail_contribuable",
+      "email"
+    ],
+    "similarityMethod": "Jaro"
+  },
+  "num_tel_adherent": {
+    "features": [
+      "num_tel_adherent",
+      "num_tel_benef_app",
+      "num_tele_contribuable",
+      "telephone"
+    ],
+    "similarityMethod": "Jaro"
+  },
+  "num_passeport": {
+    "features": [
+      "num_passeport"
+    ],
+    "similarityMethod": "NeedlemanWunschSimilarity"
+  }
+}

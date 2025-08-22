@@ -13,6 +13,7 @@ import sklearn.metrics as metrics
 from transformers import get_linear_schedule_with_warmup, AutoTokenizer
 import matplotlib.pyplot as plt
 from datetime import datetime
+import json
 
 from .model import DittoModel
 lm_mp = {
@@ -429,3 +430,58 @@ def plot_metrics(csv_path, save_dir=None):
     else:
         plt.show()
 
+
+def clean_mapping(json_file):
+    # Load the original JSON
+    with open(json_file, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    seen_features = set()
+    cleaned_data = {}
+
+    for category, details in data.items():
+        # Keep only features not seen before
+        new_features = []
+        for feature in details["features"]:
+            if feature not in seen_features:
+                new_features.append(feature)
+                seen_features.add(feature)
+        # Only add category if it has any features left
+        if new_features:
+            cleaned_data[category] = {
+                "features": new_features,
+                "similarityMethod": details["similarityMethod"]
+            }
+
+    # Save cleaned JSON
+    with open(json_file, "w", encoding="utf-8") as f:
+        json.dump(cleaned_data, f, indent=2, ensure_ascii=False)
+
+    print("Cleaning mapping json file done.")
+
+
+def normalize_columns(df_path, json_file):
+    """
+    Normalize CSV columns according to the mapping.json 
+    and overwrite (or save as new file).
+    """
+    df = pd.read_csv(df_path)
+    normalized_df = pd.DataFrame()
+
+    with open(json_file, "r", encoding="utf-8") as f:
+        mapping = json.load(f)
+
+    for category, details in mapping.items():
+        features = details["features"]
+        existing_features = [col for col in features if col in df.columns]
+        if existing_features:
+            normalized_df[category] = df[existing_features].bfill(axis=1).iloc[:, 0]
+
+    normalized_df.to_csv(df_path, index=False)
+
+    print(f"✅ Normalized the csv file.")
+
+
+
+#clean_mapping(json_file="my_code/mapping.json")
+#normalize_columns(df_path="my_code/reference.csv", json_file="my_code/mapping.json")
