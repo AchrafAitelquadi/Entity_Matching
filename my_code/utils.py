@@ -257,7 +257,7 @@ def csv_to_ditto_txt(csv_path, out_txt_path, columns_to_use=None):
     os.makedirs(os.path.dirname(out_txt_path), exist_ok=True)
     
     if columns_to_use is None:
-        columns_to_use = [col for col in df.columns if col != "id"]
+        columns_to_use = [col for col in df.columns if col != "id" and col != "primary_key"]
 
     with open(out_txt_path, "w", encoding="utf-8") as f:
         for _, row in df.iterrows():
@@ -467,21 +467,33 @@ def clean_mapping(json_file):
 
 def normalize_columns(df_path, json_file):
     """
-    Normalize CSV columns according to the mapping.json 
-    and overwrite (or save as new file).
+    Normalize CSV columns according to mapping.json.
+    Columns not in the mapping will remain untouched.
+    Overwrites the same CSV file.
     """
+    # Load the CSV
     df = pd.read_csv(df_path)
-    normalized_df = pd.DataFrame()
-
+    clean_mapping(json_file)
+    # Load and clean mapping
     with open(json_file, "r", encoding="utf-8") as f:
         mapping = json.load(f)
 
+    normalized_df = pd.DataFrame()
+
+    # Handle mapped columns
     for category, details in mapping.items():
         features = details["features"]
         existing_features = [col for col in features if col in df.columns]
         if existing_features:
             normalized_df[category] = df[existing_features].bfill(axis=1).iloc[:, 0]
 
-    normalized_df.to_csv(df_path, index=False)
+    # Keep columns not in mapping
+    unmapped_cols = [col for col in df.columns if col not in 
+                     {f for details in mapping.values() for f in details["features"]}]
+    
+    for col in unmapped_cols:
+        normalized_df[col] = df[col]
 
-    print(f"✅ Normalized the csv file.")
+    # Save back to same path
+    normalized_df.to_csv(df_path, index=False)
+    print(f"✅ Normalized and saved CSV at: {df_path}")
