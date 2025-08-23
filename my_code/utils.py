@@ -14,6 +14,7 @@ from transformers import get_linear_schedule_with_warmup, AutoTokenizer
 import matplotlib.pyplot as plt
 from datetime import datetime
 import json
+from pyhive import hive
 
 from .model import DittoModel
 lm_mp = {
@@ -497,3 +498,29 @@ def normalize_columns(df_path, json_file):
     # Save back to same path
     normalized_df.to_csv(df_path, index=False)
     print(f"✅ Normalized and saved CSV at: {df_path}")
+
+
+
+def fetch_from_hive(hive_host, hive_port, hive_user, hive_database, source_table, reference_table,
+                    source_csv_path, reference_csv_path):
+    """
+    Fetches source and reference tables from Hive and saves them as CSV.
+    """
+    conn = hive.Connection(
+        host=hive_host,
+        port=hive_port,
+        username=hive_user,
+        database=hive_database
+    )
+
+    # Fetch source
+    source_query = f"SELECT * FROM {source_table}"
+    df_source = pd.read_sql(source_query, conn)
+    df_source.to_csv(source_csv_path, index=False)
+
+    # Fetch reference
+    reference_query = f"SELECT * FROM {reference_table}"
+    df_reference = pd.read_sql(reference_query, conn)
+    df_reference.to_csv(reference_csv_path, index=False)
+
+    conn.close()
