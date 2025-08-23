@@ -485,8 +485,3 @@ def normalize_columns(df_path, json_file):
     normalized_df.to_csv(df_path, index=False)
 
     print(f"✅ Normalized the csv file.")
-
-
-
-clean_mapping(json_file="my_code/mapping.json")
-normalize_columns(df_path="my_code/reference.csv", json_file="my_code/mapping.json")
