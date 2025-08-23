@@ -252,14 +252,19 @@ def normalize_word(word):
     word = ''.join([char for char in word if unicodedata.category(char) != 'Mn'])
     return word
     
-def csv_to_ditto_txt(csv_path, out_txt_path):
+def csv_to_ditto_txt(csv_path, out_txt_path, columns_to_use=None):
     df = pd.read_csv(csv_path)
-    df.drop(columns=["id"])
     os.makedirs(os.path.dirname(out_txt_path), exist_ok=True)
     
+    if columns_to_use is None:
+        columns_to_use = [col for col in df.columns if col != "id"]
+
     with open(out_txt_path, "w", encoding="utf-8") as f:
         for _, row in df.iterrows():
-            fields = [f"COL {normalize_word(col)} VAL {normalize_word(str(val))}" for col, val in row.items() if col != "id"]
+            fields = []
+            for col in columns_to_use:
+                if col in row:
+                    fields.append(f"COL {normalize_word(col)} VAL {normalize_word(str(row[col]))}")
             line = " ".join(fields)
             f.write(line + "\n")
 
@@ -483,5 +488,5 @@ def normalize_columns(df_path, json_file):
 
 
 
-#clean_mapping(json_file="my_code/mapping.json")
-#normalize_columns(df_path="my_code/reference.csv", json_file="my_code/mapping.json")
+clean_mapping(json_file="my_code/mapping.json")
+normalize_columns(df_path="my_code/reference.csv", json_file="my_code/mapping.json")

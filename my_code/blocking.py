@@ -8,7 +8,6 @@ from sklearn.model_selection import train_test_split
 from sentence_transformers import SentenceTransformer
 from .utils import csv_to_ditto_txt, evaluate_blocking_metrics, dump_ditto_txt, dump_pairs_csv
 
-
 def encode_all(input_path, out_path, model, overwrite=True):
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
 
@@ -46,8 +45,8 @@ def blocked_matmul(mata, matb, threshold=0.95, k=3, batch_size=1024):
 
 def run_blocking(hp):
     # Step 1: Generate Ditto-style .txt
-    csv_to_ditto_txt(hp.table_reference_csv, hp.table_reference_txt)
-    csv_to_ditto_txt(hp.table_source_csv, hp.table_source_txt)
+    csv_to_ditto_txt(hp.table_reference_csv, hp.table_reference_txt, hp.columns_to_use)
+    csv_to_ditto_txt(hp.table_source_csv, hp.table_source_txt, hp.columns_to_use)
 
     # Step 2: Load model
     model = SentenceTransformer(hp.model_name_blocking)
