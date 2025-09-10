@@ -254,6 +254,35 @@ def normalize_word(word):
     return word
     
 def csv_to_ditto_txt(csv_path, out_txt_path, columns_to_use=None):
+    """
+    Convert a CSV file into Ditto-style text format.
+
+    Each row in the CSV is transformed into a line of text where each column
+    is represented as:
+        "COL <column_name> VAL <value>"
+
+    Example:
+    --------
+    Input row:
+        {"name": "Alice", "age": 30}
+    Output line:
+        "COL name VAL Alice COL age VAL 30"
+
+    Parameters
+    ----------
+    csv_path : str
+        Path to the input CSV file containing the entity table.
+    out_txt_path : str
+        Path to save the generated Ditto-style text file.
+    columns_to_use : list of str, optional
+        Subset of column names to include in the conversion. If None,
+        all columns except "id" and "primary_key" are used.
+
+    Returns
+    -------
+    None
+        Writes the converted data directly to the output text file.
+    """
     df = pd.read_csv(csv_path)
     os.makedirs(os.path.dirname(out_txt_path), exist_ok=True)
     
@@ -292,9 +321,6 @@ def evaluate_blocking_metrics(pairs, ground_truth_path, ref_table_path, data_tab
 
     # Set of true matches from ground truth
     true_matches = set(zip(gt_df[gt_df["match"] == 1]["ref_id"], gt_df[gt_df["match"] == 1]["data_id"]))
-
-    # Set of predicted matches from blocking
-    predicted_pairs = set((ref_id_map[i], data_id_map[j]) for i, j, _, _ in pairs)
 
     # Set of predicted positives (sim > threshold AND labeled 1 in blocking)
     predicted_positive = set((ref_id_map[i], data_id_map[j]) for i, j, _, label in pairs if label == 1)
