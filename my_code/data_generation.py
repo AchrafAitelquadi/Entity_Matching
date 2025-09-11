@@ -626,5 +626,3 @@ def generate_tables2(base_path, n_total=2000, match_ratio=0.3):
     print(f" - Ground Truth: {len(ground_truth)} pairs")
     print(f"   - Matches: {n_matches}")
     print(f"   - Non-matches: {len(ground_truth) - n_matches}")
-
-generate_tables2("D:/Study/ENSIAS/stage_2/ER/ditto/resultat", n_total=2000, match_ratio=0.3)
