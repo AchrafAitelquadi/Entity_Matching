@@ -314,12 +314,14 @@ main(hp_training, config)
 > Each task’s results are stored separately to avoid overwriting when using different datasets or changing hyperparameters.
 
 
-# 2 - Training phase (notebook_inference.ipynb file)
+# 2 - Inference phase (notebook_inference.ipynb file)
 
 ## Updating File Paths
 
-Update the `base_path_inference` variable above the `hp_inference` object to a local directory (e.g.,  
-`D:/Study/ENSIAS/stage_2/ER/ditto/resultat_inference`).  
+Update the `base_path_inference` variable above the `hp_inference` object to a local directory e.g.:
+```python
+"D:/Study/ENSIAS/stage_2/ER/ditto/resultat_inference"
+``` 
 
 All other paths in `hp_inference` are automatically derived from `base_path_inference` using string formatting.  
 
@@ -327,9 +329,10 @@ All other paths in `hp_inference` are automatically derived from `base_path_infe
 
 ### Task and model path Configuration
 
-You can name the `task_training` parameter however you like its value is just a label (e.g "inference_1") and does not affect the code. However, for the model path you must provide a checkpoint that actually comes from the training phase
-(e.g "...\resultat_training\logs\Generated_data\model_Generated_data_bs32_ep1_lmdistilbert_alpha0.8_date2025-09-11.pt").
-
+You can name the `task_training` parameter however you like its value is just a label (e.g "inference_1") and does not affect the code. However, for the model path you must provide a checkpoint that actually comes from the training phase e.g. :
+```python
+ "...\resultat_training\logs\Generated_data\model_Generated_data_bs32_ep1_lmdistilbert_alpha0.8_date2025-09-11.pt"
+```
 --- 
 
 ### Data Location for Inference
