@@ -130,8 +130,8 @@ def run_blocked_inference(
         if best_result:
             # Flatten the row data into output format
             row = {
-                "idx1": best_result["idx1"],
-                "idx2": best_result["idx2"],
+                "idx_reference": best_result["idx1"],
+                "idx_source": best_result["idx2"],
                 "probability": best_result["probability"],
                 "predicted_label": best_result["predicted_label"]
             }

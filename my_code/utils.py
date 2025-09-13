@@ -237,7 +237,7 @@ def train(trainset, validset, testset, run_tag, hp):
         print(f"  Test Accuracy: {test_acc:.4f}")
         print(f"  Test Precision: {test_precision:.4f}")
         print(f"  Test Recall: {test_recall:.4f}")
-        print(f"  Test F1 Score: {test_f1:.4f} | Best F1 so far: {best_test_f1:.4f}")
+        print(f"  Test F1: {test_f1:.4f} | Best validation F1 so far: {best_test_f1:.4f}")
         with open(csv_log_path, mode='a', newline='') as f:
             writer = csv.writer(f)
             writer.writerow([
@@ -299,7 +299,7 @@ def csv_to_ditto_txt(csv_path, out_txt_path, columns_to_use=None):
             f.write(line + "\n")
 
 def dump_pairs_csv(out_fn, pairs):
-    df = pd.DataFrame(pairs, columns=["id_table_a", "id_table_b", "similarity", "label"])
+    df = pd.DataFrame(pairs, columns=["id_table_reference", "id_table_source", "similarity", "label"])
     df.to_csv(out_fn, index=False)
 
 def dump_ditto_txt(out_fn, pairs, entries_a, entries_b):
