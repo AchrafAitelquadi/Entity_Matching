@@ -67,7 +67,7 @@ def evaluate(model, iterator, threshold=None):
     best_recall = 0.0
     best_acc = 0.0
     
-    for th in np.arange(0.0, 1.0, 0.05):
+    for th in np.arange(0.4, 0.9, 0.02):
         pred = [1 if p > th else 0 for p in all_probs]
         new_f1 = metrics.f1_score(all_y, pred, zero_division=0)
         if new_f1 > best_f1:
