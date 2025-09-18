@@ -336,7 +336,7 @@ def evaluate_blocking_metrics(pairs, ground_truth_path, ref_table_path, data_tab
     total_possible_pairs = len(ref_df) * len(data_df)
     rr = 1 - (len(pairs) / total_possible_pairs)
 
-    print("\n📊 Blocking Metrics:")
+    print("Blocking Metrics:")
     print(f" - Total candidate pairs generated: {len(pairs)}")
     print(f" - Total true matches in ground truth: {len(true_matches)}")
     print(f" - Predicted positive pairs (label=1): {len(predicted_positive)}")

@@ -1,4 +1,4 @@
-from .utils import csv_to_ditto_txt, dump_ditto_txt, dump_pairs_csv, load_model_and_threshold, get_tokenizer, predict, normalize_columns
+from .utils import csv_to_ditto_txt, dump_ditto_txt, dump_pairs_csv, load_model_and_threshold, get_tokenizer, predict, normalize_columns, normalize_word
 from sentence_transformers import SentenceTransformer
 from .blocking import encode_all, blocked_matmul
 import os
@@ -6,6 +6,25 @@ from collections import defaultdict
 import torch
 import pandas as pd
 from tqdm import tqdm
+
+def row_to_ditto_txt(row: pd.Series, columns_to_use=None) -> str:
+    """
+    Serialize a single pandas row to Ditto-style text.
+
+    Each column is rendered as:
+        "COL <column_name> VAL <value>"
+    """
+    if columns_to_use is None:
+        columns_to_use = [col for col in row.index
+                          if col not in ("id", "primary_key")]
+
+    fields = []
+    for col in columns_to_use:
+        if col in row:
+            fields.append(
+                f"COL {normalize_word(col)} VAL {normalize_word(str(row[col]))}"
+            )
+    return " ".join(fields)
 
 def blocking_inference(hp):
     """
@@ -27,8 +46,8 @@ def blocking_inference(hp):
     normalize_columns(df_path=hp.table_source_csv, json_file="my_code/mapping.json")
 
     # Step 2: Convert normalized CSVs to Ditto .txt format
-    csv_to_ditto_txt(csv_path=hp.table_reference_csv, out_txt_path=hp.table_reference_txt)
-    csv_to_ditto_txt(csv_path=hp.table_source_csv, out_txt_path=hp.table_source_txt)
+    csv_to_ditto_txt(csv_path=hp.table_reference_csv, out_txt_path=hp.table_reference_txt, columns_to_use=hp.columns_to_use)
+    csv_to_ditto_txt(csv_path=hp.table_source_csv, out_txt_path=hp.table_source_txt, columns_to_use=hp.columns_to_use)
 
     # Step 3: Load sentence-transformer model and create embeddings
     model = SentenceTransformer(hp.model_name_blocking)
@@ -58,7 +77,8 @@ def run_blocked_inference(
                         source_table_csv: str,
                         output_csv: str,
                         lm: str,
-                        max_len: int
+                        max_len: int,
+                        columns_to_use: list,
                     ):
     
     """
@@ -110,9 +130,10 @@ def run_blocked_inference(
 
         for idx1, idx2 in pairs:
             # Build string inputs for the model
-            left_str = ref_df.loc[idx1].astype(str).str.cat(sep=' ')
-            right_str = src_df.loc[idx2].astype(str).str.cat(sep=' ')
-            pred, prob = predict(model, tokenizer, left_str, right_str, device, threshold, max_len)
+            left_serialized  = row_to_ditto_txt(ref_df.loc[idx1], columns_to_use=columns_to_use)
+            right_serialized = row_to_ditto_txt(src_df.loc[idx2], columns_to_use=columns_to_use)
+
+            pred, prob = predict(model, tokenizer, left_serialized, right_serialized, device, threshold, max_len)
 
             # Predict match probability
             if pred == 1 and prob > best_prob:
@@ -147,4 +168,4 @@ def run_blocked_inference(
     output_df = pd.DataFrame(results)
     os.makedirs(os.path.dirname(output_csv), exist_ok=True)
     output_df.to_csv(output_csv, index=False)
-    print(f"\nSaved final results to: {output_csv}")
+    print(f"Saved final results to: {output_csv}")

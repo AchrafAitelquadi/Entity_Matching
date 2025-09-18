@@ -620,7 +620,7 @@ def generate_tables2(base_path, n_total=2000, match_ratio=0.3):
     pd.DataFrame(source_table).to_csv(os.path.join(folder_path, "source_table.csv"), index=False)
     pd.DataFrame(ground_truth).to_csv(os.path.join(folder_path, "ground_truth.csv"), index=False)
 
-    print("\n📁 Files saved")
+    print("Files saved")
     print(f" - Reference: {len(reference_table)} rows")
     print(f" - Source:    {len(source_table)} rows")
     print(f" - Ground Truth: {len(ground_truth)} pairs")

@@ -157,7 +157,7 @@ def run_blocking(hp):
     dump_pairs_csv(hp.output_pairs_csv, pairs)
     dump_ditto_txt(hp.output_ditto_txt, pairs, entries_ref, entries_src)
 
-    print(f"\n✅ Blocking completed: {len(pairs)} balanced pairs written to:")
+    print(f"Blocking completed: {len(pairs)} balanced pairs")
 
     # Create dataset directories for splits
     dataset_csv_dir = os.path.join(hp.dataset_csv_dir, hp.task)
@@ -178,5 +178,5 @@ def run_blocking(hp):
         split_df.to_csv(split_csv, index=False)
         dump_ditto_txt(split_txt, split_df.values.tolist(), entries_ref, entries_src)
 
-    print("\n📁 Split saved")
+    print("Split saved")
 
