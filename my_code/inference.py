@@ -99,7 +99,7 @@ def run_blocked_inference(
     # Step 3: Group candidate pairs by source-row ID
     grouped = defaultdict(list)
     for _, row in blocked_pairs.iterrows():
-        grouped[row["id_table_b"]].append((row["id_table_a"], row["id_table_b"]))
+        grouped[row["id_table_source"]].append((row["id_table_reference"], row["id_table_source"]))
 
     results = []
 
