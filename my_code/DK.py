@@ -8,7 +8,7 @@ class DKInjector:
         config: the task configuration
         name: the injector name
     """
-    def __init__(self, config, name):
+    def __init__(self, config, name="dk"):
         self.config = config
         self.name = name
         self.initialize()
