@@ -144,8 +144,8 @@ def run_blocked_inference(
             if pred == 1 and prob > best_prob:
                 best_prob = prob
                 best_result = {
-                    "idx1": idx1,
-                    "idx2": idx2,
+                    "idx1": int(idx1),
+                    "idx2": int(idx2),
                     "probability": prob,
                     "predicted_label": pred,
                     "ref_row": ref_df.loc[idx1].to_dict(),
