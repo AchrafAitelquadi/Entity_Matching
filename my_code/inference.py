@@ -134,9 +134,10 @@ def run_blocked_inference(
             left_serialized  = row_to_ditto_txt(ref_df.loc[idx1], columns_to_use=columns_to_use)
             right_serialized = row_to_ditto_txt(src_df.loc[idx2], columns_to_use=columns_to_use)
 
-            #Insert domain knowledge
-            left_serialized = dk.transform(left_serialized)
-            right_serialized = dk.transform(right_serialized)
+            if dk is not None:
+                #Insert domain knowledge
+                left_serialized = dk.transform(left_serialized)
+                right_serialized = dk.transform(right_serialized)
 
             pred, prob = predict(model, tokenizer, left_serialized, right_serialized, device, threshold, max_len)
 
