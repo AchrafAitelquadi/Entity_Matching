@@ -182,7 +182,7 @@ def train(trainset, validset, testset, run_tag, hp):
     
     date_str = datetime.now().strftime("%Y-%m-%d")
     lm_name = hp.lm.replace('/', '_').replace('-', '_')
-    csv_filename = f"{hp.task}_bs{hp.batch_size}_ep{hp.epochs}_lm{lm_name}_alpha{hp.alpha_aug}_date{date_str}.csv"
+    csv_filename = f"{hp.task}_bs{hp.batch_size}_ep{hp.epochs}_lm{lm_name}_date{date_str}.csv"
     csv_log_path = os.path.join(hp.base_path_blocking, hp.logdir, hp.task, csv_filename)
 
     os.makedirs(os.path.dirname(csv_log_path), exist_ok=True)
@@ -394,7 +394,7 @@ def run_inference(model_path, left_str, right_str, lm, max_len, threshold=None):
     print("prediction: ", pred)
     print("probability: ", prob)
 
-def plot_metrics(csv_path, save_dir=None):
+def plot_metrics(csv_path, save_dir=True):
     """
     Plots all metrics from a CSV over epochs.
     Validation and test metrics of the same type are shown on the same plot.
@@ -458,7 +458,7 @@ def plot_metrics(csv_path, save_dir=None):
         filename = os.path.basename(csv_path).replace(".csv", "_metrics.png")
         plot_path = os.path.join(save_dir, filename)
         plt.savefig(plot_path)
-        print(f"[✔] Plot saved to {plot_path}")
+        print(f"Plot saved to {plot_path}")
     else:
         plt.show()
 
