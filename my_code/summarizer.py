@@ -95,7 +95,11 @@ class Summarizer:
                 return ""
             sentA, sentB = parts[:2]
             label = parts[2] if len(parts) > 2 else None 
-
+        else:
+            if len(parts) < 3:
+                return ""
+            sentA, sentB, label = parts[:3]
+            
         res=''
         cnt = Counter()
         for sent in [sentA, sentB]:
