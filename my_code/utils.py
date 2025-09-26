@@ -454,11 +454,9 @@ def plot_metrics(csv_path, save_dir=True):
     plt.tight_layout()
 
     if save_dir:
-        os.makedirs(save_dir, exist_ok=True)
         filename = os.path.basename(csv_path).replace(".csv", "_metrics.png")
-        plot_path = os.path.join(save_dir, filename)
-        plt.savefig(plot_path)
-        print(f"Plot saved to {plot_path}")
+        plt.savefig(filename)
+        print(f"Plot saved to {filename}")
     else:
         plt.show()
 
