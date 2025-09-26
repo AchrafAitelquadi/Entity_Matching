@@ -18,32 +18,53 @@ class Summarizer:
         tokenizer (Tokenizer): a tokenizer from the huggingface library
     """
 
-    def __init__(self, task_config, lm):
+    def __init__(self, task_config, lm, inference=False, inference_file=None):
         self.config = task_config
         self.tokenizer = get_tokenizer(lm)
         self.len_cache = {}
+        self.inference = inference
+        self.inference_file = inference_file
+        self.vocab = None
+        self.idf = None
+
+        # Always build index
         self.build_index()
         
     def build_index(self):
-        """Build the idf index.
-
-        Store the index and vocabulary in self.idf and self.vocab.
-        """
-        fns = [self.config["trainset"],
-               self.config["validset"],
-               self.config['testset']]
+        """Build the idf index depending on mode (train or inference)."""
         content = []
+
+        if not self.inference:
+            # Training mode → use train/valid/test sets
+            fns = [self.config["trainset"],
+                   self.config["validset"],
+                   self.config["testset"]]
+        else:
+            # Inference mode → require a blocked pairs file
+            if not self.inference_file:
+                raise ValueError("Inference mode requires inference_file path")
+            fns = [self.inference_file]
+
+        # Collect content
         for fn in fns:
             with open(fn) as fin:
                 for line in fin:
-                    LL = line.split('\t')
-                    if len(LL) > 2:
-                        for entry in LL:
+                    LL = line.strip().split('\t')
+                    # include all except last if training, include all if inference
+                    if not self.inference:
+                        if len(LL) > 2:
+                            for entry in LL:
+                                content.append(entry)
+                    else:
+                        # include all except last if it's a label? or include all?
+                        for entry in LL[:-1]:  # exclude label for TF-IDF
                             content.append(entry)
+
+        # Fit TF-IDF
         vectorizer = TfidfVectorizer().fit(content)
         self.vocab = vectorizer.vocabulary_
         self.idf = vectorizer.idf_
-
+    
     def get_len(self, word):
         """
         Return the sentence_piece length of a token.
@@ -67,7 +88,14 @@ class Summarizer:
         Returns:
             str: the summarized example
         """
-        sentA, sentB, label = row.strip().split('\t')
+        parts = row.strip().split('\t')
+
+        if self.inference:
+            if len(parts) < 2:
+                return ""
+            sentA, sentB = parts[:2]
+            label = parts[2] if len(parts) > 2 else None 
+
         res=''
         cnt = Counter()
         for sent in [sentA, sentB]:
@@ -104,7 +132,10 @@ class Summarizer:
 
             res += '\t'
 
-        res += label + '\n'
+        if label is not None:
+            res += label + '\n'
+        else:
+            res = res.rstrip('\t ') + '\n'
 
         return res
     

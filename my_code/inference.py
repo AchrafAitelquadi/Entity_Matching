@@ -6,6 +6,7 @@ from collections import defaultdict
 import torch
 import pandas as pd
 from tqdm import tqdm
+from .summarizer import Summarizer
 
 def row_to_ditto_txt(row: pd.Series, columns_to_use=None) -> str:
     """
@@ -79,6 +80,7 @@ def run_blocked_inference(
                         lm: str,
                         max_len: int,
                         columns_to_use: list,
+                        inference_txt_path,
                         dk
                     ):
     
@@ -124,6 +126,12 @@ def run_blocked_inference(
 
     results = []
 
+    summarizer = Summarizer(
+        task_config=None,             # pas besoin de config pour inference
+        lm=lm,
+        inference=True,
+        inference_file=inference_txt_path  # fichier txt avec paires
+    )
     # Step 4: For each source row, pick the best positive match
     for idx2, pairs in tqdm(grouped.items(), desc="Processing blocked inference"):
         best_prob = -1.0
@@ -133,6 +141,10 @@ def run_blocked_inference(
             # Build string inputs for the model
             left_serialized  = row_to_ditto_txt(ref_df.loc[idx1], columns_to_use=columns_to_use)
             right_serialized = row_to_ditto_txt(src_df.loc[idx2], columns_to_use=columns_to_use)
+
+            # Summarize the serialized texts
+            left_serialized = summarizer.transform(f"{left_serialized}\t{right_serialized}", max_len=max_len)
+            right_serialized = summarizer.transform(f"{right_serialized}\t{right_serialized}", max_len=max_len)
 
             if dk is not None:
                 #Insert domain knowledge
