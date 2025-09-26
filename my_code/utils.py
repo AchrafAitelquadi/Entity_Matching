@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 import json
 from pyhive import hive
-
+from torch.amp import autocast, GradScaler
 from .model import DittoModel
 lm_mp = {
     "roberta" : "roberta-base",
@@ -78,8 +78,6 @@ def evaluate(model, iterator, threshold=None):
             best_acc = metrics.accuracy_score(all_y, pred)
 
     return best_f1, best_th, best_acc, best_precision, best_recall
-
-from torch.amp import autocast, GradScaler
 
 def train_step(train_iter, model, optimizer, scheduler, hp):
     """Perform a single training step
@@ -219,7 +217,7 @@ def train(trainset, validset, testset, run_tag, hp):
                     os.makedirs(directory)
 
                 # save the checkpoints for each component
-                ckpt_path = os.path.join(hp.base_path_blocking, hp.logdir, hp.task, f'model_{hp.task}_bs{hp.batch_size}_ep{hp.epochs}_lm{lm_name}_alpha{hp.alpha_aug}_date{date_str}.pt')
+                ckpt_path = os.path.join(hp.base_path_blocking, hp.logdir, hp.task, f'model_{hp.task}_bs{hp.batch_size}_ep{hp.epochs}_lm{lm_name}_date{date_str}.pt')
                 ckpt = {'model': model.state_dict(),
                         'optimizer': optimizer.state_dict(),
                         'scheduler': scheduler.state_dict(),
@@ -454,7 +452,7 @@ def plot_metrics(csv_path, save_dir=True):
     plt.tight_layout()
 
     if save_dir:
-        filename = os.path.basename(csv_path).replace(".csv", "_metrics.png")
+        filename = csv_path.replace(".csv", "_metrics.png")
         plt.savefig(filename)
         print(f"Plot saved to {filename}")
     else:
